@@ -207,3 +207,9 @@ Kafka schemas use Protobuf (reusing shared-contracts proto definitions);
 gRPC stubs generated via protobuf-maven-plugin; breaking-change detection
 uses buf for both gRPC and Kafka proto schemas. no runtime Schema Registry (define-and-publish scope only)
 ```
+
+## 5. Speckit Tasks
+```bash
+/speckit-tasks 
+Tests are mandatory per constitution (TDD). Generate test tasks before implementation tasks for each contract.
+```
