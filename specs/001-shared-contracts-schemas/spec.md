@@ -8,6 +8,24 @@
 
 **Input**: User description: "As a developer working on product-service or order-service, I need shared-contracts to provide gRPC proto definitions, Kafka event schemas, and HTTP DTOs so that all services have a single versioned source of truth for inter-service communication contracts"
 
+## Clarifications
+
+### Session 2026-06-07
+
+- Q: What is the deliverable boundary of this feature? → A: Define & publish only —
+  `shared-contracts` holds proto/schemas/DTOs plus generated typed artifacts and
+  versioning/changelog. Actual gRPC servers and Kafka producer/consumer wiring in the
+  services are out of scope (separate features).
+- Q: Which consumers must `shared-contracts` generate typed artifacts for? → A: Java/JVM
+  only (the Spring Boot services). TypeScript/Angular-frontend type generation is out of
+  scope.
+- Q: How is backward-compatibility enforced when a contract changes? → A: Automated CI gate
+  — a compatibility check runs in CI, fails the build on an undeclared breaking change, and
+  enforces the matching version bump.
+- Q: Across how many versions must a consumer remain interoperable? → A: N and N-1 — a
+  service on the latest version must interoperate with peers one compatible version behind
+  during rollout.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Consume contracts as a single versioned dependency (Priority: P1)
@@ -97,8 +115,8 @@ a breaking bump with a corresponding changelog entry.
 ### Edge Cases
 
 - What happens when two services temporarily depend on different `shared-contracts`
-  versions that define the same message differently? (Compatibility window expectations
-  must be defined.)
+  versions that define the same message differently? Interoperability is guaranteed only
+  across N and N-1 (see FR-010a); spans wider than one version are not supported.
 - How does the system handle a contract definition that is syntactically invalid or
   references a type that does not exist?
 - What happens when an HTTP DTO, a gRPC message, and a Kafka event are all expected to
@@ -125,12 +143,20 @@ a breaking bump with a corresponding changelog entry.
   `order-service` as a pinned, versioned dependency rather than via copied definitions.
 - **FR-007**: Each published release of `shared-contracts` MUST carry a single explicit
   version identifier covering all contract categories together.
-- **FR-008**: The build of `shared-contracts` MUST produce typed, usable artifacts derived
-  from the gRPC and event-schema definitions for consumption by services.
+- **FR-008**: The build of `shared-contracts` MUST produce typed, usable Java/JVM artifacts
+  derived from the gRPC and event-schema definitions for consumption by the Spring Boot
+  services. Generating artifacts for non-JVM consumers (e.g., the Angular frontend) is out
+  of scope.
 - **FR-009**: Any backward-incompatible change to a contract MUST require a major version
   bump.
+- **FR-009a**: An automated compatibility check MUST run in CI on every change to a contract
+  definition, MUST fail the build when an undeclared backward-incompatible change is detected,
+  and MUST enforce that the version bump matches the detected change severity.
 - **FR-010**: Backward-compatible changes MUST be publishable under a minor or patch version
   bump without breaking existing consumers.
+- **FR-010a**: A consumer on the latest version MUST remain interoperable with peers running
+  the immediately preceding compatible version (N and N-1) during a rollout window, so that
+  services can deploy independently.
 - **FR-011**: Each release MUST include a changelog identifying what changed and whether the
   change is breaking.
 - **FR-012**: The contract definitions MUST be discoverable in one well-known location within
@@ -172,6 +198,8 @@ a breaking bump with a corresponding changelog entry.
   field-mismatch rate in integration testing.
 - **SC-006**: A contract definition error is detected at build time in 100% of cases and
   never reaches a published artifact.
+- **SC-007**: An undeclared backward-incompatible contract change is blocked by the CI
+  compatibility gate in 100% of cases before merge.
 
 ## Assumptions
 
@@ -189,4 +217,13 @@ a breaking bump with a corresponding changelog entry.
 - A single shared version covers all contract categories together; categories are not
   versioned independently.
 - Backward compatibility for consumers is expected during a transition window when adjacent
-  versions are deployed, allowing independent service deployment.
+  versions are deployed (specifically N and N-1), allowing independent service deployment.
+
+### Out of Scope
+
+- Running gRPC servers/clients or Kafka producers/consumers inside any service. This feature
+  defines and publishes the contracts and their generated typed artifacts only; transport
+  adoption in `product-service`/`order-service` is a separate feature.
+- Migrating existing HTTP/REST inter-service calls to gRPC or Kafka.
+- Generating typed artifacts for non-JVM consumers (e.g., TypeScript types for the Angular
+  frontend).

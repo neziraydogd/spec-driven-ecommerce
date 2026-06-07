@@ -159,8 +159,12 @@ Implementation
 New feature → start again from /speckit-specify
 ```
 ## 2. Specifying a Feature (/speckit-specify)
-```text
+```bash
 /speckit-specify
 Developer can build product-service and order-service against a shared-contracts library that provides gRPC protos, Kafka event schemas, and HTTP DTOs for api-gateway — ensuring all inter-service contracts have a single versioned source of truth.
 ```
+## 3. Clarify Spec
 
+```bash
+/speckit-clarify 
+```
