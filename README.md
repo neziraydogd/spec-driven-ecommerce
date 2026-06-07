@@ -168,3 +168,30 @@ Developer can build product-service and order-service against a shared-contracts
 ```bash
 /speckit-clarify 
 ```
+## 4. After Clarify,constitution resolve the gRPC/Kafka governance gap
+
+## Amend the constitution to sanction gRPC and Kafka as inter-service
+communication mechanisms, alongside HTTP REST. This is a MINOR version
+bump (1.0.0 → 1.1.0) since it expands existing principles, not removes them.
+
+Specifically:
+
+1. Principle IV (Gateway-Mediated Communication):
+    - Keep the rule that the FRONTEND calls api-gateway only (never services directly).
+    - Keep JWT validation at api-gateway only.
+    - BUT allow service-to-service communication over three sanctioned channels:
+      synchronous HTTP REST, synchronous gRPC, and asynchronous Kafka events.
+    - External/frontend-facing traffic still enters exclusively through api-gateway.
+
+2. Principle I (Service Independence & Bounded Data Ownership):
+    - Clarify that Kafka events are an allowed coordination mechanism and do NOT
+      count as "shared runtime state." Services still own their schemas and must
+      not share databases or in-memory state.
+
+3. Technology & Repository Standards / shared-contracts description:
+    - Update the shared-contracts contents to include: HTTP DTOs, gRPC proto
+      definitions, Kafka event schemas, API interfaces, and the RFC 7807 error
+      response model — as the single versioned source of truth for all contracts.
+
+Update api-contract.md references to note that gRPC and Kafka contracts are also
+governed by shared-contracts versioning.
