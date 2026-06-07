@@ -213,3 +213,9 @@ uses buf for both gRPC and Kafka proto schemas. no runtime Schema Registry (defi
 /speckit-tasks 
 Tests are mandatory per constitution (TDD). Generate test tasks before implementation tasks for each contract.
 ```
+
+## 6. Speckit Analyze
+
+```bash
+/speckit-analyze 
+```

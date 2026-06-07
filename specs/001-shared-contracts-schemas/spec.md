@@ -195,7 +195,8 @@ a breaking bump with a corresponding changelog entry.
 - **SC-004**: 100% of backward-incompatible contract changes are released under a major
   version bump (no breaking change ships under a minor/patch version).
 - **SC-005**: Two services pinned to the same contract version exchange messages with a 0%
-  field-mismatch rate in integration testing.
+  field-mismatch rate in integration testing. *(Deferred — validated in the transport-adoption
+  feature, since it requires running services; out of scope here.)*
 - **SC-006**: A contract definition error is detected at build time in 100% of cases and
   never reaches a published artifact.
 - **SC-007**: An undeclared backward-incompatible contract change is blocked by the CI
@@ -227,3 +228,9 @@ a breaking bump with a corresponding changelog entry.
 - Migrating existing HTTP/REST inter-service calls to gRPC or Kafka.
 - Generating typed artifacts for non-JVM consumers (e.g., TypeScript types for the Angular
   frontend).
+- End-to-end consumer verification from running services (FR-006 integration) is validated
+  in the future transport-adoption feature, not here. This feature only publishes a
+  consumable artifact; it does not build a service that consumes it.
+- SC-005 (two services on the same version exchanging messages with a 0% field-mismatch
+  rate in integration testing) requires running services and is therefore validated in the
+  transport-adoption feature, not in this define-and-publish feature.
