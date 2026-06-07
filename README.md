@@ -85,7 +85,7 @@ Since Bash is selected, continue using Bash for all subsequent commands.
 
 The following is a single Spec Kit command that initializes the project constitution:
 
-```text
+```bash
 
 /speckit-constitution
 
@@ -169,8 +169,10 @@ Developer can build product-service and order-service against a shared-contracts
 /speckit-clarify 
 ```
 ## 4. After Clarify,constitution resolve the gRPC/Kafka governance gap
+```bash
+/speckit-constitution
 
-## Amend the constitution to sanction gRPC and Kafka as inter-service
+Amend the constitution to sanction gRPC and Kafka as inter-service
 communication mechanisms, alongside HTTP REST. This is a MINOR version
 bump (1.0.0 → 1.1.0) since it expands existing principles, not removes them.
 
@@ -195,3 +197,13 @@ Specifically:
 
 Update api-contract.md references to note that gRPC and Kafka contracts are also
 governed by shared-contracts versioning.
+```
+
+## 5. Speckit Plan  
+```bash
+/speckit-plan 
+
+Kafka schemas use Protobuf (reusing shared-contracts proto definitions);
+gRPC stubs generated via protobuf-maven-plugin; breaking-change detection
+uses buf for both gRPC and Kafka proto schemas. no runtime Schema Registry (define-and-publish scope only)
+```

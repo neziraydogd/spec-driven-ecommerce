@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package ecommerce.common.v1;
+
+option java_multiple_files = true;
+option java_package = "com.ecommerce.contracts.common.v1";
+
+// RFC 7807 Problem Details, mirrored for gRPC and event error surfaces.
+// The canonical HTTP form is the hand-written ProblemDetail Java DTO.
+message ProblemDetail {
+  string type = 1;      // URI reference identifying the problem type
+  string title = 2;     // short, human-readable summary
+  int32 status = 3;     // HTTP status code
+  string detail = 4;    // human-readable explanation specific to this occurrence
+  string instance = 5;  // URI reference identifying the specific occurrence
+  map<string, string> extensions = 6;  // optional problem-specific members
+}

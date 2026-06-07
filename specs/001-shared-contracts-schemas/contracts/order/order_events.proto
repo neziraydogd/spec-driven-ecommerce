@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package ecommerce.order.v1;
+
+option java_multiple_files = true;
+option java_package = "com.ecommerce.contracts.order.v1";
+
+import "google/protobuf/timestamp.proto";
+import "order/order.proto";
+
+// Emitted when an order transitions state. Published as a Kafka event payload (proto3).
+// Allowed transitions (validated by producers in a future feature, documented here):
+//   DRAFT -> CONFIRMED -> SHIPPED -> DELIVERED
+//   DRAFT -> CANCELLED
+//   DELIVERED -> RETURN_REQUESTED -> RETURNED
+message OrderStateChanged {
+  string event_id = 1;                      // UUID
+  string order_id = 2;                      // UUID
+  OrderStatus from_status = 3;
+  OrderStatus to_status = 4;                // MUST be an allowed transition from from_status
+  google.protobuf.Timestamp occurred_at = 5;
+}

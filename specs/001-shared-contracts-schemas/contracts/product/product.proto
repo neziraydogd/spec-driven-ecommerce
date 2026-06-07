@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package ecommerce.product.v1;
+
+option java_multiple_files = true;
+option java_package = "com.ecommerce.contracts.product.v1";
+
+// Canonical product representation shared across gRPC and (composed into) events.
+message Product {
+  string id = 1;            // UUID
+  string sku = 2;           // unique business key
+  string name = 3;
+  string description = 4;
+  string price_amount = 5;  // decimal as string to avoid float drift
+  string currency = 6;      // ISO 4217
+  bool active = 7;
+}
+
+message GetProductRequest {
+  string id = 1;  // UUID
+}
+
+message GetProductResponse {
+  Product product = 1;
+}
+
+// gRPC service CONTRACT only — no server/client implemented in this feature.
+service ProductService {
+  rpc GetProduct(GetProductRequest) returns (GetProductResponse);
+}

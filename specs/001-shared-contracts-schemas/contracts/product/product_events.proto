@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package ecommerce.product.v1;
+
+option java_multiple_files = true;
+option java_package = "com.ecommerce.contracts.product.v1";
+
+import "google/protobuf/timestamp.proto";
+
+// Reason a stock movement occurred.
+enum StockMovementReason {
+  STOCK_MOVEMENT_REASON_UNSPECIFIED = 0;
+  PURCHASE = 1;
+  SALE = 2;
+  ADJUSTMENT = 3;
+  RETURN = 4;
+}
+
+// Append-only stock movement (Principle V: immutable, no update/delete shape).
+// Published as a Kafka event payload (proto3). No producer/consumer in this feature.
+message StockMovementRecorded {
+  string movement_id = 1;             // UUID, immutable identity
+  string product_id = 2;              // UUID
+  sint32 quantity_delta = 3;          // signed, non-zero (+in / -out)
+  StockMovementReason reason = 4;
+  google.protobuf.Timestamp occurred_at = 5;
+}
