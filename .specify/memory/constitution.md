@@ -1,50 +1,137 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+SYNC IMPACT REPORT
+==================
+Version change: (template, unversioned) → 1.0.0
+Rationale: Initial ratification — template placeholders replaced with concrete,
+project-specific governance for the E-commerce Platform. MAJOR baseline.
+
+Modified principles (template slot → concrete principle):
+- [PRINCIPLE_1_NAME] → I. Service Independence & Bounded Data Ownership
+- [PRINCIPLE_2_NAME] → II. Contract-First Integration
+- [PRINCIPLE_3_NAME] → III. Test-First (NON-NEGOTIABLE)
+- [PRINCIPLE_4_NAME] → IV. Gateway-Mediated Communication
+- [PRINCIPLE_5_NAME] → V. Domain Integrity & Immutability
+
+Added sections:
+- Technology & Repository Standards (was [SECTION_2_NAME])
+- Development Workflow & Quality Gates (was [SECTION_3_NAME])
+
+Removed sections: none
+
+Templates requiring updates:
+- ✅ .specify/templates/plan-template.md — Constitution Check gate references
+  remain generic ("Gates determined based on constitution file"); no edit needed.
+- ✅ .specify/templates/spec-template.md — no constitution-coupled mandatory
+  sections changed; no edit needed.
+- ✅ .specify/templates/tasks-template.md — test tasks remain OPTIONAL per
+  template, but TDD principle (III) makes them mandatory for this project; teams
+  must include test tasks. No structural edit required.
+- ⚠ README.md / CLAUDE.md / AGENTS.md — should reference this constitution as the
+  source of architectural truth (manual follow-up, non-blocking).
+
+Follow-up TODOs: none. RATIFICATION_DATE set to first adoption date (2026-06-07).
+-->
+
+# E-commerce Platform Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Service Independence & Bounded Data Ownership
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+Each microservice (`api-gateway`, `product-service`, `order-service`) MUST build,
+test, and deploy independently with its own `pom.xml` and its own database schema.
+Cross-service database joins are PROHIBITED; a service MUST NOT read or write another
+service's schema. No shared runtime state is permitted between services — coordination
+happens exclusively through published contracts and HTTP. Database migrations MUST be
+managed with Flyway, scoped per-service.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+**Rationale**: Independent deployability and data ownership are the defining value of
+microservices; sharing schemas or runtime state reintroduces the coupling the
+architecture exists to eliminate.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### II. Contract-First Integration
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+All inter-service and frontend-facing types (DTOs, API interfaces, error response
+models) MUST live in `shared-contracts` and be consumed as a Maven dependency via local
+`mvn install`. Direct source imports across service modules are PROHIBITED. Every
+endpoint MUST be documented in `shared-contracts/api-contract.md`. Error responses MUST
+follow the RFC 7807 Problem Details format. Any breaking change to a contract MUST bump
+the `shared-contracts` version AND update `api-contract.md` in the same change.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+**Rationale**: A single versioned contract artifact is the only safe way for
+independently deployed services to evolve without silent breakage.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### III. Test-First (NON-NEGOTIABLE)
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+Tests MUST be written before implementation. The Red-Green-Refactor cycle is mandatory:
+tests are authored, observed to fail, then implementation makes them pass. Each service
+MUST maintain a minimum of 80% line coverage, enforced in CI. A change that lowers
+coverage below the threshold MUST NOT merge.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+**Rationale**: TDD with an enforced coverage floor is the project's primary defense
+against regressions in a system where services deploy on independent cadences.
+
+### IV. Gateway-Mediated Communication
+
+Services MUST communicate only via HTTP REST routed through `api-gateway`. The frontend
+MUST call `api-gateway` exclusively and MUST NOT call any service directly. Authentication
+is JWT-based and MUST be validated at the `api-gateway` level only; downstream services
+trust the gateway-validated identity and MUST NOT re-implement token validation.
+
+**Rationale**: A single ingress and auth boundary keeps security and routing concerns in
+one auditable place and prevents the frontend from coupling to internal topology.
+
+### V. Domain Integrity & Immutability
+
+Stock movements MUST be append-only; existing movement records MUST NOT be mutated or
+deleted. Order lifecycle transitions MUST follow the defined state machine and MUST
+reject any transition not explicitly allowed:
+
+- `DRAFT → CONFIRMED → SHIPPED → DELIVERED`
+- `DRAFT → CANCELLED`
+- `DELIVERED → RETURN_REQUESTED → RETURNED`
+
+**Rationale**: An immutable stock ledger and an explicit state machine give the platform
+an auditable, reconstructable history and prevent illegal business states.
+
+## Technology & Repository Standards
+
+- Backend services MUST use Spring Boot 3.2 on Java 17.
+- The frontend MUST be Angular 17 using standalone components, with `HttpClient` as the
+  API layer.
+- The repository is a monorepo with the fixed layout: `api-gateway/`, `product-service/`,
+  `order-service/`, `frontend/`, `shared-contracts/`, and `specs/`.
+- Cross-service Spec Kit files MUST live under `specs/`.
+- Global repository rules are defined in `CLAUDE.md` (repo root); agent-specific rules in
+  `AGENTS.md` (repo root). This constitution supersedes both where they conflict.
+
+## Development Workflow & Quality Gates
+
+- Each service MUST be buildable in isolation with `cd <service> && mvn clean install`.
+- All CI checks (build, tests, 80% coverage gate) MUST pass before merge.
+- Commit messages MUST follow Conventional Commits.
+- All documentation and code comments MUST be written in English.
+- Breaking API changes MUST NOT merge without the corresponding `shared-contracts`
+  version bump and `api-contract.md` update (see Principle II).
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution supersedes all other development practices. When `CLAUDE.md`,
+`AGENTS.md`, or any template conflicts with this document, this document prevails.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+Amendments MUST be proposed via pull request, documented in the Sync Impact Report at the
+top of this file, and approved before merge. Versioning follows semantic versioning:
+
+- **MAJOR**: Backward-incompatible governance changes — principle removals or
+  redefinitions.
+- **MINOR**: A new principle or section is added, or existing guidance is materially
+  expanded.
+- **PATCH**: Clarifications, wording, or non-semantic refinements.
+
+All pull requests and reviews MUST verify compliance with these principles. Any deviation
+or added complexity MUST be justified in the plan's Complexity Tracking section; an
+unjustified violation blocks merge. Agents and contributors MUST use `CLAUDE.md` and
+`AGENTS.md` for runtime development guidance, subject to the supremacy of this
+constitution.
+
+**Version**: 1.0.0 | **Ratified**: 2026-06-07 | **Last Amended**: 2026-06-07
